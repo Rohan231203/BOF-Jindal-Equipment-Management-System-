@@ -91,9 +91,9 @@ async def home(request: Request):
     for motor_id, motor_data in data.items():
         motor_info_list.append({
             "motor_id": motor_id,
-            "motor_used_in": motor_data.get("Motor Used In", "N/A"),
-            "area_equipment": motor_data.get("Area/Equipment", "N/A"),
-            "description": motor_data.get("Motor Description", ""),
+            "motor_used_in": motor_data.get("Motor used in", "N/A"),
+            "area_equipment": motor_data.get("Area / Equipment", "N/A"),
+            "description": motor_data.get("Description of Process", ""),
             "critical": motor_data.get("Critical", "NO")
         })
     
@@ -138,7 +138,8 @@ async def view_motor(request: Request, id: str):
         "motor_id": id,
         "motor_data": motor_data,
         "issues": motor_data.get("issues", []),
-        "maintenance_records": motor_data.get("maintenance_records", [])
+        "maintenance_records": motor_data.get("maintenance_records", []),
+        "today": datetime.now().strftime("%Y-%m-%d")
     })
 
 @app.post("/update_motor_details")
@@ -229,17 +230,30 @@ async def add_maintenance(request: Request, motor_id: str):
     if motor_id not in data:
         raise HTTPException(status_code=404, detail="Motor not found.")
 
+    # Get the maintenance date from the form, or use today's date if not provided
+    maintenance_date = form_data.get("maintenance_date")
+    if not maintenance_date:
+        maintenance_date = datetime.now().strftime("%Y-%m-%d")
+
     new_record = {
         "id": str(uuid.uuid4()),
         "description": form_data.get("maintenance_description"),
-        "date": datetime.now().strftime("%Y-%m-%d"),
-        "performed_by": form_data.get("performed_by")
+        "date": maintenance_date,
+        "performed_by": form_data.get("performed_by"),
+        "remarks": form_data.get("maintenance_remarks"),
+        "next_maintenance_date": form_data.get("next_maintenance_date")
     }
 
     if "maintenance_records" not in data[motor_id]:
         data[motor_id]["maintenance_records"] = []
 
     data[motor_id]["maintenance_records"].append(new_record)
+    
+    # Update the main motor record with the latest maintenance date and next maintenance date
+    data[motor_id]["Last Maintenance Date"] = maintenance_date
+    if form_data.get("next_maintenance_date"):
+        data[motor_id]["Next Maintenance Date"] = form_data.get("next_maintenance_date")
+    
     save_data(data)
 
     return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
@@ -255,8 +269,8 @@ async def issues_dashboard(request: Request):
             for issue in motor_data["issues"]:
                 motors_with_issues.append({
                     "motor_id": motor_id,
-                    "motor_used_in": motor_data.get("Motor Used In"),
-                    "area_equipment": motor_data.get("Area/Equipment"),
+                    "motor_used_in": motor_data.get("Motor used in", "N/A"),
+                    "area_equipment": motor_data.get("Area / Equipment", "N/A"),
                     "issue_description": issue.get("description"),
                     "issue_date": issue.get("date_raised"),
                     "issue_raised_by": issue.get("raised_by"),
@@ -268,8 +282,17 @@ async def issues_dashboard(request: Request):
     
     # Sort by issue date (newest first), then by status
     motors_with_issues.sort(key=lambda x: (x["issue_status"] != "Open", x.get("issue_date", "")), reverse=True)
+    
+    # Calculate stats for dashboard
+    total_issues = len(motors_with_issues)
+    open_issues = len([m for m in motors_with_issues if m["issue_status"] == "Open"])
+    progress_issues = len([m for m in motors_with_issues if m["issue_status"] == "InProgress"])
+    resolved_issues = len([m for m in motors_with_issues if m["issue_status"] == "Resolved"])
 
     return templates.TemplateResponse("issues.html", {
         "request": request,
-        "motors_with_issues": motors_with_issues
+        "motors_with_issues": motors_with_issues,
+        "total_issues": total_issues,
+        "open_issues": open_issues + progress_issues,
+        "resolved_issues": resolved_issues
     })

@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <div class="nav">
-            <a href="/">🏠 Home</a>
-            <a href="/dashboard">📊 Maintenance Dashboard</a>
-            <a href="/issues">🚨 Issues Dashboard</a>
-        </div>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Motor Details - {{ motor_id }}</title>
@@ -34,6 +29,12 @@
         .password-section { background: #fff3cd; padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #ffeeba; }
         .qr-section { text-align: center; padding: 20px; }
         .readonly { background-color: #f0f0f0; cursor: not-allowed; }
+        .issues-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .issues-table th, .issues-table td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        .issues-table th { background-color: #f8f9fa; font-weight: bold; color: #333; }
+        .status-open { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+        .status-inprogress { background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+        .status-resolved { background: #27ae60; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
 
         @media (max-width: 768px) {
             .header h1 { font-size: 1.4em; }
@@ -63,10 +64,9 @@
             <a href="/issues">🚨<span class="nav-text"> Issues</span></a>
         </div>
 
-        <form action="/update" method="post">
+        <!-- Motor Details Section -->
+        <form action="/update_motor_details" method="post">
             <input type="hidden" name="motor_id" value="{{ motor_id }}">
-
-            <!-- Basic Information Section -->
             <div class="card">
                 <div class="form-section">
                     <h3>📋 Basic Information</h3>
@@ -269,82 +269,177 @@
                 </div>
             </div>
 
-            <!-- Maintenance Information -->
-            <div class="card">
-                <div class="form-section">
-                    <h3>🛠️ Maintenance Information</h3>
+                    <!-- Maintenance Information -->
+                    <div class="form-section">
+                        <h3>🛠️ Maintenance Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Last Maintenance Date</label>
+                                <input type="date" name="Last Maintenance Date" value="{{ motor_data.get('Last Maintenance Date', '') }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Next Maintenance Date</label>
+                                <input type="date" name="Next Maintenance Date" value="{{ motor_data.get('Next Maintenance Date', '') }}">
+                            </div>
+                            <div class="form-group">
+                                <label>REMARKS</label>
+                                <textarea name="REMARKS" rows="4" placeholder="Additional remarks and observations">{{ motor_data.get('REMARKS', '') }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+            <!-- Save Button Section -->
+            <div class="password-section">
+                <div class="form-group">
+                    <label>🔒 Password (Required to Save Changes)</label>
+                    <input type="password" name="password" placeholder="Enter admin password" required>
+                </div>
+                <button type="submit" class="btn">💾 Save Motor Details</button>
+                <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
+            </div>
+        </form>
+
+        <!-- Maintenance History -->
+        <div class="card">
+            <div class="form-section">
+                <h3>🛠️ Maintenance History</h3>
+                <table class="issues-table" style="width:100%; margin-bottom:20px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Performed By</th>
+                            <th>Remarks</th>
+                            <th>Next Maintenance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if maintenance_records %}
+                            {% for record in maintenance_records %}
+                            <tr>
+                                <td>{{ record.date }}</td>
+                                <td>{{ record.description }}</td>
+                                <td>{{ record.performed_by }}</td>
+                                <td>{{ record.remarks or '' }}</td>
+                                <td>{{ record.next_maintenance_date or '' }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align:center;">No maintenance records found</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+
+                <h4>Add New Maintenance Record</h4>
+                <form action="/add_maintenance/{{ motor_id }}" method="post" id="maintenanceForm">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Last Maintenance Date</label>
-                            <input type="date" name="Last Maintenance Date" value="{{ motor_data.get('Last Maintenance Date', '') }}">
+                            <label>Date</label>
+                            <input type="date" name="maintenance_date" value="{{ today }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Performed By</label>
+                            <input type="text" name="performed_by" placeholder="Name of person who performed maintenance" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Maintenance Description</label>
+                            <textarea name="maintenance_description" rows="3" placeholder="Describe the maintenance work performed" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Remarks</label>
+                            <textarea name="maintenance_remarks" rows="2" placeholder="Additional remarks about the maintenance"></textarea>
                         </div>
                         <div class="form-group">
                             <label>Next Maintenance Date</label>
-                            <input type="date" name="Next Maintenance Date" value="{{ motor_data.get('Next Maintenance Date', '') }}">
-                        </div>
-                        <div class="form-group">
-                            <label>REMARKS</label>
-                            <textarea name="REMARKS" rows="4" placeholder="Additional remarks and observations">{{ motor_data.get('REMARKS', '') }}</textarea>
+                            <input type="date" name="next_maintenance_date">
                         </div>
                     </div>
-                </div>
+                    <button type="submit" class="btn">Add Maintenance Record</button>
+                </form>
+                
+                <script>
+                    document.getElementById('maintenanceForm').addEventListener('submit', function(e) {
+                        setTimeout(function() {
+                            document.getElementById('maintenanceForm').reset();
+                        }, 100);
+                    });
+                </script>
             </div>
+        </div>
 
-            <!-- Issues & Problems Tracking -->
-            <div class="card">
-                <div class="form-section">
-                    <h3>🚨 Issues & Problems Tracking</h3>
+        <!-- Issues & Problems Tracking -->
+        <div class="card">
+            <div class="form-section">
+                <h3>🚨 Issues & Problems History</h3>
+                <table class="issues-table" style="width:100%; margin-bottom:20px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Raised By</th>
+                            <th>Status</th>
+                            <th>Solved By</th>
+                            <th>Date Solved</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if issues %}
+                            {% for issue in issues %}
+                            <tr>
+                                <td>{{ issue.date_raised }}</td>
+                                <td>{{ issue.description }}</td>
+                                <td>{{ issue.raised_by }}</td>
+                                <td>
+                                    <span class="status-{{ issue.status|lower }}">{{ issue.status }}</span>
+                                </td>
+                                <td>{{ issue.solved_by or '' }}</td>
+                                <td>{{ issue.solution_date or '' }}</td>
+                                <td>
+                                    {% if issue.status != "Resolved" %}
+                                    <form action="/update_issue/{{ motor_id }}/{{ issue.id }}" method="post">
+                                        <select name="status" style="padding:3px; margin-right:5px;">
+                                            <option value="Open" {% if issue.status == "Open" %}selected{% endif %}>Open</option>
+                                            <option value="InProgress" {% if issue.status == "InProgress" %}selected{% endif %}>In Progress</option>
+                                            <option value="Resolved" {% if issue.status == "Resolved" %}selected{% endif %}>Resolved</option>
+                                        </select>
+                                        <input type="text" name="solved_by" placeholder="Solved by" style="padding:3px; width:100px; margin-right:5px;" {% if issue.status == "Resolved" %}disabled{% endif %}>
+                                        <button type="submit" style="padding:3px 5px;">Update</button>
+                                    </form>
+                                    {% else %}
+                                    Resolved
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align:center;">No issues found</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+
+                <h4>Add New Issue</h4>
+                <form action="/add_issue/{{ motor_id }}" method="post">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Issue/Problem Description</label>
-                            <textarea name="Issue Description" rows="4" placeholder="Describe the issue or problem encountered with this motor">{{ motor_data.get('Issue Description', '') }}</textarea>
+                            <label>Issue Description</label>
+                            <textarea name="issue_description" rows="3" placeholder="Describe the issue encountered with this motor" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Date of Issue</label>
-                            <input type="date" name="Issue Date" value="{{ motor_data.get('Issue Date', '') }}">
-                        </div>
-                        <div class="form-group">
-                            <label>Issue Raised By</label>
-                            <input name="Issue Raised By" value="{{ motor_data.get('Issue Raised By', '') }}" placeholder="Name of person who identified the issue">
-                        </div>
-                        <div class="form-group">
-                            <label>Solved By (Name)</label>
-                            <input name="Solved By" value="{{ motor_data.get('Solved By', '') }}" placeholder="Name of person who solved the issue">
-                        </div>
-                        <div class="form-group">
-                            <label>Date Solved</label>
-                            <input type="date" name="Date Solved" value="{{ motor_data.get('Date Solved', '') }}">
-                        </div>
-                        <div class="form-group">
-                            <label>Solution Description</label>
-                            <textarea name="Solution Description" rows="4" placeholder="Describe how the issue was resolved">{{ motor_data.get('Solution Description', '') }}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Issue Status</label>
-                            <select name="Issue Status">
-                                <option value="">Select Status</option>
-                                <option value="Open" {% if motor_data.get('Issue Status') == 'Open' %}selected{% endif %}>Open</option>
-                                <option value="In Progress" {% if motor_data.get('Issue Status') == 'In Progress' %}selected{% endif %}>In Progress</option>
-                                <option value="Resolved" {% if motor_data.get('Issue Status') == 'Resolved' %}selected{% endif %}>Resolved</option>
-                                <option value="Closed" {% if motor_data.get('Issue Status') == 'Closed' %}selected{% endif %}>Closed</option>
-                            </select>
+                            <label>Raised By</label>
+                            <input type="text" name="issue_raised_by" placeholder="Name of person reporting the issue" required>
                         </div>
                     </div>
-                </div>
+                    <button type="submit" class="btn">Report New Issue</button>
+                </form>
             </div>
+        </div>
 
-            <!-- Submit Section -->
-            <div class="card">
-                <div class="password-section">
-                    <div class="form-group">
-                        <label>🔒 Password (Required to Save Changes)</label>
-                        <input type="password" name="password" placeholder="Enter admin password" required>
-                    </div>
-                    <button type="submit" class="btn">💾 Save All Changes</button>
-                    <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
-                </div>
-            </div>
-        </form>
+
     </div>
 </body>
 </html>

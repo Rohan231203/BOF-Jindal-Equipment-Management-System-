@@ -26,9 +26,8 @@
         .issues-table th { background-color: #f8f9fa; font-weight: bold; color: #333; }
         .issues-table tr:hover { background-color: #f5f5f5; }
         .status-open { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
-        .status-progress { background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+        .status-inprogress { background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
         .status-resolved { background: #27ae60; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
-        .status-closed { background: #95a5a6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
         .critical-yes { background: #e74c3c; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
         .critical-no { background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
         .motor-link { color: #667eea; text-decoration: none; font-weight: bold; }
@@ -139,7 +138,7 @@
 
             <div id="open" class="tab-content">
                 <h3>Open Issues</h3>
-                {% set open_motors = motors_with_issues|selectattr("issue_status", "equalto", "Open")|list %}
+                {% set open_motors = motors_with_issues|selectattr("issue_status", "in", ["Open", "InProgress"])|list %}
                 {% if open_motors %}
                 <table class="issues-table">
                     <thead>
@@ -181,7 +180,7 @@
 
             <div id="resolved" class="tab-content">
                 <h3>Resolved Issues</h3>
-                {% set resolved_motors = motors_with_issues|selectattr("issue_status", "ne", "Open")|list %}
+                {% set resolved_motors = motors_with_issues|selectattr("issue_status", "equalto", "Resolved")|list %}
                 {% if resolved_motors %}
                 <table class="issues-table">
                     <thead>
