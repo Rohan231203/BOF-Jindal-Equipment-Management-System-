@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor QR Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 0; text-align: center; margin-bottom: 30px; border-radius: 10px; }
+        .nav { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
+        .nav a { background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; transition: background 0.3s; }
+        .nav a:hover { background: #45a049; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-group input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+        .form-group input:focus { border-color: #667eea; outline: none; }
+        .btn { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+        .btn:hover { background: #5a6fd8; }
+        .motor-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; margin-top: 20px; }
+        .motor-item { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; transition: transform 0.2s, box-shadow 0.2s; }
+        .motor-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .motor-item a { color: #667eea; text-decoration: none; font-weight: bold; display: block; margin-bottom: 8px; font-size: 18px; }
+        .motor-item a:hover { text-decoration: underline; }
+        .motor-details { font-size: 14px; color: #666; line-height: 1.4; }
+        .motor-usage { font-weight: 600; color: #333; margin-bottom: 4px; }
+        .motor-area { color: #777; margin-bottom: 4px; }
+        .motor-description { color: #555; }
+        .critical-badge { background: #e74c3c; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Motor QR Management System</h1>
+            <p>Comprehensive Motor Maintenance & QR Code Management</p>
+        </div>
+
+        <div class="nav">
+            <a href="/">🏠 Home</a>
+            <a href="/dashboard">📊 Maintenance Dashboard</a>
+            <a href="/issues">🚨 Issues Dashboard</a>
+        </div>
+
+        <div class="card">
+            <h2>📝 Add New Motor</h2>
+            <form action="/add_motor" method="post">
+                <div class="form-group">
+                    <label for="motor_id">Motor ID:</label>
+                    <input type="text" id="motor_id" name="motor_id" required placeholder="Enter unique motor ID (e.g., MTR001)">
+                </div>
+                <button type="submit" class="btn">🎯 Generate QR & Add Motor</button>
+            </form>
+        </div>
+
+        {% if motor_info_list %}
+        <div class="card">
+            <h2>📋 Existing Motors ({{ motor_info_list|length }})</h2>
+            <div class="motor-list">
+                {% for motor in motor_info_list %}
+                <div class="motor-item">
+                    <a href="/motor?id={{ motor.motor_id }}">
+                        {{ motor.motor_id }}
+                        {% if motor.critical == 'YES' %}
+                            <span class="critical-badge">CRITICAL</span>
+                        {% endif %}
+                    </a>
+                    <div class="motor-details">
+                        <div class="motor-usage">
+                            🔧 {{ motor.motor_used_in }}
+                        </div>
+                        <div class="motor-area">
+                            📍 {{ motor.area_equipment }}
+                        </div>
+                        <div class="motor-description">
+                            📋 {{ motor.description[:80] }}{% if motor.description|length > 80 %}...{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <div class="nav">
+            <a href="/">🏠 Home</a>
+            <a href="/dashboard">📊 Maintenance Dashboard</a>
+            <a href="/issues">🚨 Issues Dashboard</a>
+        </div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Details - {{ motor_id }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: center; margin-bottom: 15px; border-radius: 10px; }
+        .header h1 { font-size: 1.5em; margin-bottom: 5px; }
+        .header p { font-size: 0.9em; }
+        .nav { text-align: center; margin-bottom: 15px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-around; }
+        .nav a { color: #667eea; padding: 8px 10px; text-decoration: none; border-radius: 5px; transition: background-color 0.3s, color 0.3s; font-weight: 500; margin: 0 2px; display: inline-block; }
+        .nav a:hover, .nav a.active { background-color: #667eea; color: white; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #667eea; outline: none; box-shadow: 0 0 5px rgba(102,126,234,0.5); }
+        .form-section { border-left: 4px solid #667eea; padding-left: 20px; margin-top: 10px; }
+        .form-section h3 { color: #667eea; margin-bottom: 20px; font-size: 1.4em; }
+        .btn { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background 0.3s; margin-right: 10px; }
+        .btn:hover { background: #5a6fd8; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6169; }
+        .password-section { background: #fff3cd; padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #ffeeba; }
+        .qr-section { text-align: center; padding: 20px; }
+        .readonly { background-color: #f0f0f0; cursor: not-allowed; }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.4em; }
+            .nav a { padding: 8px; }
+            .nav a .nav-text { display: none; } /* Hide text on mobile */
+            .card { padding: 20px; }
+            .form-section { padding-left: 15px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 5px; }
+            .header { padding: 10px; margin-bottom: 10px; }
+            .nav a { font-size: 14px; }
+            .btn { width: 100%; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="icon">🔧</span> Motor: {{ motor_id }}</h1>
+            <p>Details & Maintenance Records</p>
+        </div>
+
+        <div class="nav">
+            <a href="/">🏠<span class="nav-text"> Home</span></a>
+            <a href="/dashboard">📊<span class="nav-text"> Dashboard</span></a>
+            <a href="/issues">🚨<span class="nav-text"> Issues</span></a>
+        </div>
+
+        <form action="/update" method="post">
+            <input type="hidden" name="motor_id" value="{{ motor_id }}">
+
+            <!-- Basic Information Section -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>📋 Basic Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Sl. No.</label>
+                            <input name="Sl. No." value="{{ motor_data.get('Sl. No.', '') }}" placeholder="Serial Number">
+                        </div>
+                        <div class="form-group">
+                            <label>Area / Equipment</label>
+                            <input name="Area / Equipment" value="{{ motor_data.get('Area / Equipment', '') }}" placeholder="Location/Equipment Area">
+                        </div>
+                        <div class="form-group">
+                            <label>Motor used in</label>
+                            <input name="Motor used in" value="{{ motor_data.get('Motor used in', '') }}" placeholder="Application/Usage">
+                        </div>
+                        <div class="form-group">
+                            <label>Description of Process</label>
+                            <textarea name="Description of Process" rows="3" placeholder="Detailed process description">{{ motor_data.get('Description of Process', '') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Electrical Specifications -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>⚡ Electrical Specifications</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Critical</label>
+                            <select name="Critical" class="form-control">
+                                <option value="">Select</option>
+                                <option value="YES" {% if motor_data.get('Critical', '') == 'YES' %}selected{% endif %}>YES</option>
+                                <option value="NO" {% if motor_data.get('Critical', '') == 'NO' %}selected{% endif %}>NO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Voltage (V)</label>
+                            <input name="Voltage (V)" value="{{ motor_data.get('Voltage (V)', '') }}" placeholder="e.g., 415V">
+                        </div>
+                        <div class="form-group">
+                            <label>Frequency (HZ)</label>
+                            <input name="Frequency (HZ)" value="{{ motor_data.get('Frequency (HZ)', '') }}" placeholder="e.g., 50Hz">
+                        </div>
+                        <div class="form-group">
+                            <label>Rating (KW)</label>
+                            <input name="Rating( KW)" value="{{ motor_data.get('Rating( KW)', '') }}" placeholder="Power in KW">
+                        </div>
+                        <div class="form-group">
+                            <label>Rating (HP)</label>
+                            <input name="Rating (HP)" value="{{ motor_data.get('Rating (HP)', '') }}" placeholder="Power in HP">
+                        </div>
+                        <div class="form-group">
+                            <label>FLC (Full Load Current)</label>
+                            <input name="FLC" value="{{ motor_data.get('FLC', '') }}" placeholder="Full Load Current in Amps">
+                        </div>
+                        <div class="form-group">
+                            <label>Connection</label>
+                            <select name="Connection">
+                                <option value="">Select Connection</option>
+                                <option value="Star" {% if motor_data.get('Connection') == 'Star' %}selected{% endif %}>Star</option>
+                                <option value="Delta" {% if motor_data.get('Connection') == 'Delta' %}selected{% endif %}>Delta</option>
+                                <option value="Star-Delta" {% if motor_data.get('Connection') == 'Star-Delta' %}selected{% endif %}>Star-Delta</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mechanical Specifications -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>🔧 Mechanical Specifications</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>FRAME SIZE</label>
+                            <input name="FRAME SIZE" value="{{ motor_data.get('FRAME SIZE', '') }}" placeholder="Frame Size">
+                        </div>
+                        <div class="form-group">
+                            <label>Poles</label>
+                            <input name="Poles" value="{{ motor_data.get('Poles', '') }}" placeholder="Number of Poles">
+                        </div>
+                        <div class="form-group">
+                            <label>RPM</label>
+                            <input name="RPM" value="{{ motor_data.get('RPM', '') }}" placeholder="Revolutions per minute">
+                        </div>
+                        <div class="form-group">
+                            <label>Duty</label>
+                            <select name="Duty">
+                                <option value="">Select Duty</option>
+                                <option value="S1" {% if motor_data.get('Duty') == 'S1' %}selected{% endif %}>S1 - Continuous</option>
+                                <option value="S2" {% if motor_data.get('Duty') == 'S2' %}selected{% endif %}>S2 - Short Time</option>
+                                <option value="S3" {% if motor_data.get('Duty') == 'S3' %}selected{% endif %}>S3 - Intermittent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Insulation Class</label>
+                            <select name="Insulation class">
+                                <option value="">Select Class</option>
+                                <option value="B" {% if motor_data.get('Insulation class') == 'B' %}selected{% endif %}>Class B</option>
+                                <option value="F" {% if motor_data.get('Insulation class') == 'F' %}selected{% endif %}>Class F</option>
+                                <option value="H" {% if motor_data.get('Insulation class') == 'H' %}selected{% endif %}>Class H</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Type of Motor</label>
+                            <select name="Type of Motor (SQ cage, Slippring)">
+                                <option value="">Select Type</option>
+                                <option value="Squirrel Cage" {% if motor_data.get('Type of Motor (SQ cage, Slippring)') == 'Squirrel Cage' %}selected{% endif %}>Squirrel Cage</option>
+                                <option value="Slip Ring" {% if motor_data.get('Type of Motor (SQ cage, Slippring)') == 'Slip Ring' %}selected{% endif %}>Slip Ring</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Mounting</label>
+                            <select name="Mounting (Flange, Foot, Geared, Flange cum Foot)">
+                                <option value="">Select Mounting</option>
+                                <option value="Flange" {% if motor_data.get('Mounting (Flange, Foot, Geared, Flange cum Foot)') == 'Flange' %}selected{% endif %}>Flange</option>
+                                <option value="Foot" {% if motor_data.get('Mounting (Flange, Foot, Geared, Flange cum Foot)') == 'Foot' %}selected{% endif %}>Foot</option>
+                                <option value="Geared" {% if motor_data.get('Mounting (Flange, Foot, Geared, Flange cum Foot)') == 'Geared' %}selected{% endif %}>Geared</option>
+                                <option value="Flange cum Foot" {% if motor_data.get('Mounting (Flange, Foot, Geared, Flange cum Foot)') == 'Flange cum Foot' %}selected{% endif %}>Flange cum Foot</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bearing Information -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>🔩 Bearing Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>DE Bearing No.</label>
+                            <input name="DE bearing no" value="{{ motor_data.get('DE bearing no', '') }}" placeholder="Drive End Bearing Number">
+                        </div>
+                        <div class="form-group">
+                            <label>NDE Bearing No.</label>
+                            <input name="NDE bearing no" value="{{ motor_data.get('NDE bearing no', '') }}" placeholder="Non-Drive End Bearing Number">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manufacturer Details -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>🏭 Manufacturer Details</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Make</label>
+                            <input name="Make" value="{{ motor_data.get('Make', '') }}" placeholder="Manufacturer Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Serial No. as per Name Plate</label>
+                            <input name="Serial No as per Name plate" value="{{ motor_data.get('Serial No as per Name plate', '') }}" placeholder="Serial Number from Nameplate">
+                        </div>
+                        <div class="form-group">
+                            <label>If Standby please mark "Y"</label>
+                            <select name="If Standby please mark  \" Y \"">
+                                <option value="">Select</option>
+                                <option value="Y" {% if motor_data.get('If Standby please mark  " Y "') == 'Y' %}selected{% endif %}>Y - Yes (Standby)</option>
+                                <option value="N" {% if motor_data.get('If Standby please mark  " Y "') == 'N' %}selected{% endif %}>N - No (Active)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory & Procurement -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>📦 Inventory & Procurement</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Spare in Hand</label>
+                            <input name="Spare in Hand" value="{{ motor_data.get('Spare in Hand', '') }}" placeholder="Available spare parts">
+                        </div>
+                        <div class="form-group">
+                            <label>Spare kept at</label>
+                            <input name="Spare kept at" value="{{ motor_data.get('Spare kept at', '') }}" placeholder="Storage location">
+                        </div>
+                        <div class="form-group">
+                            <label>Last PO Number</label>
+                            <input name="last PO number" value="{{ motor_data.get('last PO number', '') }}" placeholder="Last Purchase Order Number">
+                        </div>
+                        <div class="form-group">
+                            <label>Material Code</label>
+                            <input name="Material Code" value="{{ motor_data.get('Material Code', '') }}" placeholder="Material/Part Code">
+                        </div>
+                        <div class="form-group">
+                            <label>Any PR pending / Date</label>
+                            <input name="Any PR pending / Date" value="{{ motor_data.get('Any PR pending / Date', '') }}" placeholder="Purchase Requisition Details">
+                        </div>
+                        <div class="form-group">
+                            <label>Any PO pending / Date</label>
+                            <input name="Any PO pending / Date" value="{{ motor_data.get('Any PO pending / Date', '') }}" placeholder="Purchase Order Details">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Information -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>🛠️ Maintenance Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Last Maintenance Date</label>
+                            <input type="date" name="Last Maintenance Date" value="{{ motor_data.get('Last Maintenance Date', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Next Maintenance Date</label>
+                            <input type="date" name="Next Maintenance Date" value="{{ motor_data.get('Next Maintenance Date', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>REMARKS</label>
+                            <textarea name="REMARKS" rows="4" placeholder="Additional remarks and observations">{{ motor_data.get('REMARKS', '') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issues & Problems Tracking -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>🚨 Issues & Problems Tracking</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Issue/Problem Description</label>
+                            <textarea name="Issue Description" rows="4" placeholder="Describe the issue or problem encountered with this motor">{{ motor_data.get('Issue Description', '') }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Issue</label>
+                            <input type="date" name="Issue Date" value="{{ motor_data.get('Issue Date', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Issue Raised By</label>
+                            <input name="Issue Raised By" value="{{ motor_data.get('Issue Raised By', '') }}" placeholder="Name of person who identified the issue">
+                        </div>
+                        <div class="form-group">
+                            <label>Solved By (Name)</label>
+                            <input name="Solved By" value="{{ motor_data.get('Solved By', '') }}" placeholder="Name of person who solved the issue">
+                        </div>
+                        <div class="form-group">
+                            <label>Date Solved</label>
+                            <input type="date" name="Date Solved" value="{{ motor_data.get('Date Solved', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Solution Description</label>
+                            <textarea name="Solution Description" rows="4" placeholder="Describe how the issue was resolved">{{ motor_data.get('Solution Description', '') }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Issue Status</label>
+                            <select name="Issue Status">
+                                <option value="">Select Status</option>
+                                <option value="Open" {% if motor_data.get('Issue Status') == 'Open' %}selected{% endif %}>Open</option>
+                                <option value="In Progress" {% if motor_data.get('Issue Status') == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                <option value="Resolved" {% if motor_data.get('Issue Status') == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                <option value="Closed" {% if motor_data.get('Issue Status') == 'Closed' %}selected{% endif %}>Closed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="card">
+                <div class="password-section">
+                    <div class="form-group">
+                        <label>🔒 Password (Required to Save Changes)</label>
+                        <input type="password" name="password" placeholder="Enter admin password" required>
+                    </div>
+                    <button type="submit" class="btn">💾 Save All Changes</button>
+                    <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
+                </div>
+            </div>
+        </form>
+
+        <!-- QR Code Section -->
+        <div class="card">
+            <div class="qr-section">
+                <h3>📱 QR Code for {{ motor_id }}</h3>
+                <p>Scan this QR code to quickly access motor details</p>
+                <img src="/qr_codes/{{ motor_id }}.png" alt="QR Code for {{ motor_id }}" style="max-width: 200px; margin: 20px;">
+            </div>
+        </div>
+    </div>
+</body>
+</html>

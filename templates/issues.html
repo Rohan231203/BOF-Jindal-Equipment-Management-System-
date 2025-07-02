@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issues Dashboard - Motor QR System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 20px; text-align: center; margin-bottom: 20px; border-radius: 10px; }
+        .header h1 { font-size: 1.8em; margin-bottom: 5px; }
+        .header p { font-size: 1em; }
+        .nav { text-align: center; margin-bottom: 20px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-around; }
+        .nav a { color: #667eea; padding: 8px 10px; text-decoration: none; border-radius: 5px; transition: background-color 0.3s, color 0.3s; font-weight: 500; margin: 0 2px; display: inline-flex; align-items: center; gap: 8px; }
+        .nav a:hover, .nav a.active { background-color: #667eea; color: white; }
+        .nav a i { font-size: 1.2em; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .stat-number { font-size: 2.5em; font-weight: bold; color: #e74c3c; }
+        .stat-label { font-size: 1.1em; color: #666; margin-top: 5px; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .issues-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .issues-table th, .issues-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .issues-table th { background-color: #f8f9fa; font-weight: bold; color: #333; }
+        .issues-table tr:hover { background-color: #f5f5f5; }
+        .status-open { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+        .status-progress { background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+        .status-resolved { background: #27ae60; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+        .status-closed { background: #95a5a6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
+        .critical-yes { background: #e74c3c; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .critical-no { background: #95a5a6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .motor-link { color: #667eea; text-decoration: none; font-weight: bold; }
+        .motor-link:hover { text-decoration: underline; }
+        .empty-state { text-align: center; padding: 40px; color: #666; }
+        .empty-state .icon { font-size: 4em; margin-bottom: 20px; }
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px 5px 0 0; cursor: pointer; font-size: 16px; outline: none; transition: background 0.3s; }
+        .tab-btn.active { background: #e74c3c; }
+        .tab-content { border: 1px solid #ddd; border-top: none; padding: 20px; background: #fff; border-radius: 0 0 10px 10px; }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5em; }
+            .nav a { padding: 8px; }
+            .nav a .nav-text { display: none; } /* Hide text on mobile */
+            .stats { grid-template-columns: 1fr; }
+            .issues-table { font-size: 0.9em; }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.3em; }
+            .nav a { flex-grow: 1; justify-content: center; }
+            .issues-table { font-size: 0.8em; }
+            .tab-btn { padding: 10px 15px; font-size: 0.9em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-exclamation-triangle"></i> Issues & Problems Dashboard</h1>
+            <p>Track and Monitor Motor Issues and Resolutions</p>
+        </div>
+
+        <div class="nav">
+            <a href="/"><i class="fas fa-home"></i><span class="nav-text">Home</span></a>
+            <a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span class="nav-text">Dashboard</span></a>
+            <a href="/issues" class="active"><i class="fas fa-exclamation-triangle"></i><span class="nav-text">Issues</span></a>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_issues }}</div>
+                <div class="stat-label">Total Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ open_issues }}</div>
+                <div class="stat-label">Open Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ resolved_issues }}</div>
+                <div class="stat-label">Resolved Issues</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-tasks"></i> Motor Issues & Problems</h2>
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="showTab('all')">All Issues</button>
+                <button class="tab-btn" onclick="showTab('open')">Open Issues</button>
+                <button class="tab-btn" onclick="showTab('resolved')">Resolved Issues</button>
+            </div>
+            
+            <div id="all" class="tab-content" style="display:block;">
+                <h3>All Issues</h3>
+                {% if motors_with_issues %}
+                <table class="issues-table">
+                    <thead>
+                        <tr>
+                            <th>Motor ID</th>
+                            <th>Motor Used In</th>
+                            <th>Area/Equipment</th>
+                            <th>Issue Description</th>
+                            <th>Issue Date</th>
+                            <th>Raised By</th>
+                            <th>Status</th>
+                            <th>Solved By</th>
+                            <th>Date Solved</th>
+                            <th>Critical</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for motor in motors_with_issues %}
+                        <tr>
+                            <td><a href="/motor?id={{ motor.motor_id }}" class="motor-link">{{ motor.motor_id }}</a></td>
+                            <td>{{ motor.motor_used_in }}</td>
+                            <td>{{ motor.area_equipment }}</td>
+                            <td>{{ motor.issue_description }}</td>
+                            <td>{{ motor.issue_date }}</td>
+                            <td>{{ motor.issue_raised_by }}</td>
+                            <td><span class="status-{{ motor.issue_status|lower }}">{{ motor.issue_status }}</span></td>
+                            <td>{{ motor.issue_solved_by }}</td>
+                            <td>{{ motor.issue_solution_date }}</td>
+                            <td><span class="critical-{{ motor.critical|lower }}">{{ motor.critical }}</span></td>
+                            <td><a href="/motor?id={{ motor.motor_id }}" class="motor-link">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">✅</div>
+                    <p>No issues found.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="open" class="tab-content">
+                <h3>Open Issues</h3>
+                {% set open_motors = motors_with_issues|selectattr("issue_status", "equalto", "Open")|list %}
+                {% if open_motors %}
+                <table class="issues-table">
+                    <thead>
+                        <tr>
+                            <th>Motor ID</th>
+                            <th>Motor Used In</th>
+                            <th>Area/Equipment</th>
+                            <th>Issue Description</th>
+                            <th>Issue Date</th>
+                            <th>Raised By</th>
+                            <th>Status</th>
+                            <th>Critical</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for motor in open_motors %}
+                        <tr>
+                            <td><a href="/motor?id={{ motor.motor_id }}" class="motor-link">{{ motor.motor_id }}</a></td>
+                            <td>{{ motor.motor_used_in }}</td>
+                            <td>{{ motor.area_equipment }}</td>
+                            <td>{{ motor.issue_description }}</td>
+                            <td>{{ motor.issue_date }}</td>
+                            <td>{{ motor.issue_raised_by }}</td>
+                            <td><span class="status-open">Open</span></td>
+                            <td><span class="critical-{{ motor.critical|lower }}">{{ motor.critical }}</span></td>
+                            <td><a href="/motor?id={{ motor.motor_id }}" class="motor-link">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">✅</div>
+                    <p>No open issues.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="resolved" class="tab-content">
+                <h3>Resolved Issues</h3>
+                {% set resolved_motors = motors_with_issues|selectattr("issue_status", "ne", "Open")|list %}
+                {% if resolved_motors %}
+                <table class="issues-table">
+                    <thead>
+                        <tr>
+                            <th>Motor ID</th>
+                            <th>Motor Used In</th>
+                            <th>Area/Equipment</th>
+                            <th>Issue Description</th>
+                            <th>Issue Date</th>
+                            <th>Raised By</th>
+                            <th>Status</th>
+                            <th>Solved By</th>
+                            <th>Date Solved</th>
+                            <th>Critical</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for motor in resolved_motors %}
+                        <tr>
+                            <td><a href="/motor?id={{ motor.motor_id }}" class="motor-link">{{ motor.motor_id }}</a></td>
+                            <td>{{ motor.motor_used_in }}</td>
+                            <td>{{ motor.area_equipment }}</td>
+                            <td>{{ motor.issue_description }}</td>
+                            <td>{{ motor.issue_date }}</td>
+                            <td>{{ motor.issue_raised_by }}</td>
+                            <td><span class="status-{{ motor.issue_status|lower }}">{{ motor.issue_status }}</span></td>
+                            <td>{{ motor.issue_solved_by }}</td>
+                            <td>{{ motor.issue_solution_date }}</td>
+                            <td><span class="critical-{{ motor.critical|lower }}">{{ motor.critical }}</span></td>
+                            <td><a href="/motor?id={{ motor.motor_id }}" class="motor-link">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">✅</div>
+                    <p>No resolved issues.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            event.currentTarget.className += " active";
+        }
+    </script>
+</body>
+</html>
