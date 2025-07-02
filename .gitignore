@@ -1,3 +1,5 @@
+# Ignore QR code images
+qr_codes/
 # Python
 __pycache__/
 *.py[cod]
