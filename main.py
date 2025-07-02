@@ -14,7 +14,7 @@ app = FastAPI()
 DATA_FILE = "motor_data.json"
 QR_FOLDER = "qr_codes"
 TEMPLATES_DIR = "templates"
-PASSWORD = "admin123"
+PASSWORD = os.environ.get("MOTOR_ADMIN_PASSWORD", "admin123")  # Use environment variable in production
 PASSWORD2=""
 BASE_URL = "https://bof-jindal-equipment-management-system.onrender.com/motor?id="  # Render deployment URL
 
