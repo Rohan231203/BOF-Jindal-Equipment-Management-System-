@@ -3,8 +3,8 @@ services:
     name: motor-qr-system
     runtime: python
     plan: free
-    buildCommand: bash deploy_no_qr.sh
-    startCommand: uvicorn main_deploy_no_qr:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.14
