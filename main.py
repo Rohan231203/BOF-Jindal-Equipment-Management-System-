@@ -1,12 +1,19 @@
 import os
 import json
-import qrcode
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional
+
+# Try to import qrcode, but don't fail if it's not available
+try:
+    import qrcode
+    QR_CODE_AVAILABLE = True
+except ImportError:
+    QR_CODE_AVAILABLE = False
+    print("Warning: QR code functionality is disabled - qrcode package not available")
 
 app = FastAPI()
 
@@ -117,11 +124,15 @@ async def add_motor(request: Request, motor_id: str = Form(...)):
     data[motor_id] = {}
     save_data(data)
 
-    # Generate QR only if not exists
+    # Generate QR only if not exists and QR code library is available
     qr_path = os.path.join(QR_FOLDER, f"{motor_id}.png")
-    if not os.path.exists(qr_path):
-        qr = qrcode.make(BASE_URL + motor_id)
-        qr.save(qr_path)
+    if not os.path.exists(qr_path) and QR_CODE_AVAILABLE:
+        try:
+            qr = qrcode.make(BASE_URL + motor_id)
+            qr.save(qr_path)
+        except Exception as e:
+            print(f"Error generating QR code: {e}")
+            # Continue without generating QR code
 
     return RedirectResponse(f"/motor?id={motor_id}", status_code=302)
 
