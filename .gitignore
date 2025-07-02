@@ -32,8 +32,11 @@ env/
 *.swo
 
 # Excel files (uncomment if you don't want to include excel files in repository)
-# *.xlsx
-# *.xls
+*.xlsx
+*.xls
+
+# QR codes - exclude to save space in deployment
+qr_codes/*.png
 
 # Logs
 *.log

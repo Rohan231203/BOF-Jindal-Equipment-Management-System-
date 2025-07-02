@@ -1,6 +1,5 @@
 import os
 import json
-import qrcode
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -98,6 +97,13 @@ async def home(request: Request):
         "motor_info_list": motor_info_list
     })
 
+@app.get("/qr_info", response_class=HTMLResponse)
+async def qr_info(request: Request):
+    """Information about QR codes for the deployed version"""
+    return templates.TemplateResponse("qr_info.html", {
+        "request": request
+    })
+
 @app.get("/dashboard", response_class=HTMLResponse)
 async def maintenance_dashboard(request: Request):
     motors_due = get_motors_needing_maintenance()
@@ -117,12 +123,7 @@ async def add_motor(request: Request, motor_id: str = Form(...)):
     data[motor_id] = {}
     save_data(data)
 
-    # Generate QR only if not exists
-    qr_path = os.path.join(QR_FOLDER, f"{motor_id}.png")
-    if not os.path.exists(qr_path):
-        qr = qrcode.make(BASE_URL + motor_id)
-        qr.save(qr_path)
-
+    # Note: QR code generation is handled locally, not in deployed app
     return RedirectResponse(f"/motor?id={motor_id}", status_code=302)
 
 @app.get("/motor", response_class=HTMLResponse)
@@ -167,13 +168,6 @@ async def update_motor(request: Request):
     save_data(data)
 
     return RedirectResponse(f"/motor?id={motor_id}", status_code=302)
-
-@app.get("/qr_info", response_class=HTMLResponse)
-async def qr_info(request: Request):
-    """Information about QR codes for the deployed version"""
-    return templates.TemplateResponse("qr_info.html", {
-        "request": request
-    })
 
 @app.get("/issues", response_class=HTMLResponse)
 async def issues_dashboard(request: Request):

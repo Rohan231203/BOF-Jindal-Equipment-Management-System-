@@ -11,7 +11,7 @@ EXCEL_FILE = "MASTER MOTOR LIST OF SMS AND CASTER.xlsx"
 # --- Do not change below this line ---
 OUTPUT_JSON = "motor_data.json"
 QR_FOLDER = "qr_codes"
-BASE_URL = "https://your-railway-app-name.up.railway.app/motor?id="  # Update with your actual Railway URL
+BASE_URL = "https://bof-jindal-equipment-management-system.onrender.com/motor?id="  # Render deployment URL
 
 def convert_to_str(value):
     """Helper to convert values to string, handling dates and empty values."""

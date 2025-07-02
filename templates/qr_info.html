@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Codes Information</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #667eea; }
+        p { line-height: 1.6; }
+        .instruction { background: #f8f9fa; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0; }
+        .btn { background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
+        .btn:hover { background: #5a6fd8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Motor QR Management System</h1>
+        <h2>QR Code Information</h2>
+        
+        <p>QR codes are not included in the deployment to save space and stay within free tier limits.</p>
+        
+        <div class="instruction">
+            <h3>How to get QR codes:</h3>
+            <p>QR codes can be generated locally and printed for use on your motors. Follow these steps:</p>
+            <ol>
+                <li>Clone the repository to your local machine</li>
+                <li>Make sure the BASE_URL is set to: <code>https://bof-jindal-equipment-management-system.onrender.com/motor?id=</code></li>
+                <li>Run <code>python simple_excel_import.py</code> to generate QR codes</li>
+                <li>Print the QR codes from the <code>qr_codes</code> folder</li>
+            </ol>
+        </div>
+        
+        <p>This approach keeps the deployment light while allowing you to use QR codes locally.</p>
+        
+        <a href="/" class="btn">Back to Home</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "MTR001": {
+    "Motor used in": "Example Motor",
+    "Description of Process": "This is an example motor entry for the deployed version",
+    "Area / Equipment": "Demo Area",
+    "Next Maintenance Date": "2025-08-01",
+    "Last Maintenance Date": "2025-01-15",
+    "Critical": "YES"
+  },
+  "MTR002": {
+    "Motor used in": "Another Example Motor",
+    "Description of Process": "Second demo motor for the deployed version",
+    "Area / Equipment": "Test Area",
+    "Next Maintenance Date": "2025-07-15",
+    "Last Maintenance Date": "2025-01-01",
+    "Critical": "NO"
+  }
+}
