@@ -7,6 +7,6 @@ services:
     startCommand: uvicorn main_deploy_no_qr:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.18
+        value: 3.10.14
       - key: MOTOR_ADMIN_PASSWORD
         value: "admin123"  # Change this to a secure password in the Render dashboard
