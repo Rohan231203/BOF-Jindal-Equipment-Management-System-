@@ -104,11 +104,10 @@ async def home(request: Request):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def maintenance_dashboard(request: Request):
-    motors_due = get_motors_needing_maintenance()
+    critical_motors, other_motors = get_motors_needing_maintenance()
     return templates.TemplateResponse("dashboard.html", {
-        "request": request, 
-        "critical_motors_due": motors_due[0],
-        "other_motors_due": motors_due[1],
+        "request": request,
+        "motors_due": (critical_motors, other_motors),
         "total_motors": len(load_data())
     })
 
