@@ -1,11 +1,20 @@
 import os
 import json
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional
+import uuid
+
+# Constants
+DATA_FILE = "motor_data.json"
+QR_FOLDER = "qr_codes"
+TEMPLATES_DIR = "templates"
+PASSWORD = os.environ.get("MOTOR_ADMIN_PASSWORD", "admin123")  # Use environment variable in production
+PASSWORD2=""
+BASE_URL = "https://bof-jindal-equipment-management-system.onrender.com/motor?id="  # Render deployment URL
 
 # Try to import qrcode, but don't fail if it's not available
 try:
@@ -16,14 +25,6 @@ except ImportError:
     print("Warning: QR code functionality is disabled - qrcode package not available")
 
 app = FastAPI()
-
-# Constants
-DATA_FILE = "motor_data.json"
-QR_FOLDER = "qr_codes"
-TEMPLATES_DIR = "templates"
-PASSWORD = os.environ.get("MOTOR_ADMIN_PASSWORD", "admin123")  # Use environment variable in production
-PASSWORD2=""
-BASE_URL = "https://bof-jindal-equipment-management-system.onrender.com/motor?id="  # Render deployment URL
 
 # Setup folders
 os.makedirs(QR_FOLDER, exist_ok=True)
@@ -86,22 +87,18 @@ def get_motors_needing_maintenance():
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     data = load_data()
-    # Create a list of motor info for better display
     motor_info_list = []
-    for motor_id in data.keys():
-        motor_data = data[motor_id]
-        motor_info = {
+    for motor_id, motor_data in data.items():
+        motor_info_list.append({
             "motor_id": motor_id,
-            "motor_used_in": motor_data.get("Motor used in", "N/A"),
-            "description": motor_data.get("Description of Process", "N/A"),
-            "area_equipment": motor_data.get("Area / Equipment", "N/A"),
+            "motor_used_in": motor_data.get("Motor Used In", "N/A"),
+            "area_equipment": motor_data.get("Area/Equipment", "N/A"),
+            "description": motor_data.get("Motor Description", ""),
             "critical": motor_data.get("Critical", "NO")
-        }
-        motor_info_list.append(motor_info)
+        })
     
     return templates.TemplateResponse("home.html", {
         "request": request, 
-        "motor_list": data.keys(),
         "motor_info_list": motor_info_list
     })
 
@@ -110,7 +107,8 @@ async def maintenance_dashboard(request: Request):
     motors_due = get_motors_needing_maintenance()
     return templates.TemplateResponse("dashboard.html", {
         "request": request, 
-        "motors_due": motors_due,
+        "critical_motors_due": motors_due[0],
+        "other_motors_due": motors_due[1],
         "total_motors": len(load_data())
     })
 
@@ -127,12 +125,8 @@ async def add_motor(request: Request, motor_id: str = Form(...)):
     # Generate QR only if not exists and QR code library is available
     qr_path = os.path.join(QR_FOLDER, f"{motor_id}.png")
     if not os.path.exists(qr_path) and QR_CODE_AVAILABLE:
-        try:
-            qr = qrcode.make(BASE_URL + motor_id)
-            qr.save(qr_path)
-        except Exception as e:
-            print(f"Error generating QR code: {e}")
-            # Continue without generating QR code
+        qr_code = qrcode.make(BASE_URL + motor_id)
+        qr_code.save(qr_path)
 
     return RedirectResponse(f"/motor?id={motor_id}", status_code=302)
 
@@ -143,48 +137,113 @@ async def view_motor(request: Request, id: str):
     return templates.TemplateResponse("motor.html", {
         "request": request,
         "motor_id": id,
-        "motor_data": motor_data
+        "motor_data": motor_data,
+        "issues": motor_data.get("issues", []),
+        "maintenance_records": motor_data.get("maintenance_records", [])
     })
 
-@app.post("/update")
-async def update_motor(request: Request):
+@app.post("/update_motor_details")
+async def update_motor_details(request: Request):
     form_data = await request.form()
     motor_id = form_data.get("motor_id")
     password = form_data.get("password")
 
     if not motor_id or not password:
-        return HTMLResponse("<h2>❌ Missing Motor ID or Password</h2>", status_code=422)
+        raise HTTPException(status_code=400, detail="Motor ID and password are required.")
 
     if password != PASSWORD:
-        return HTMLResponse("<h2>❌ Unauthorized - Incorrect Password</h2>", status_code=401)
+        raise HTTPException(status_code=403, detail="Invalid password.")
 
     data = load_data()
     
     if motor_id not in data:
-        return HTMLResponse("<h2>❌ Motor ID not found in database</h2>", status_code=404)
+        raise HTTPException(status_code=404, detail="Motor not found.")
 
-    # Get the existing data for the motor
     motor_data = data.get(motor_id, {})
     
-    # Iterate through all submitted form fields and update the data
+    # Exclude issue and maintenance fields from this update
+    excluded_keys = [
+        "issue_description", "issue_date", "issue_raised_by", "issue_status", 
+        "issue_solved_by", "issue_solution_date", "password", "motor_id"
+    ]
+
     for key, value in form_data.items():
-        # Skip the fields we handle separately
-        if key in ["motor_id", "password"]:
-            continue
-        motor_data[key] = value.strip()
+        if key not in excluded_keys:
+            motor_data[key] = value
     
-    # Save the updated motor data back to the main dictionary
     data[motor_id] = motor_data
     save_data(data)
 
     return RedirectResponse(f"/motor?id={motor_id}", status_code=302)
 
-@app.get("/qr_info", response_class=HTMLResponse)
-async def qr_info(request: Request):
-    """Information about QR codes for the deployed version"""
-    return templates.TemplateResponse("qr_info.html", {
-        "request": request
-    })
+@app.post("/add_issue/{motor_id}")
+async def add_issue(request: Request, motor_id: str):
+    form_data = await request.form()
+    data = load_data()
+
+    if motor_id not in data:
+        raise HTTPException(status_code=404, detail="Motor not found.")
+
+    new_issue = {
+        "id": str(uuid.uuid4()),
+        "description": form_data.get("issue_description"),
+        "date_raised": datetime.now().strftime("%Y-%m-%d"),
+        "raised_by": form_data.get("issue_raised_by"),
+        "status": "Open"
+    }
+
+    if "issues" not in data[motor_id]:
+        data[motor_id]["issues"] = []
+    
+    data[motor_id]["issues"].append(new_issue)
+    save_data(data)
+
+    return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
+
+@app.post("/update_issue/{motor_id}/{issue_id}")
+async def update_issue(request: Request, motor_id: str, issue_id: str):
+    form_data = await request.form()
+    data = load_data()
+
+    if motor_id not in data or "issues" not in data[motor_id]:
+        raise HTTPException(status_code=404, detail="Motor or issue list not found.")
+
+    issue_to_update = next((issue for issue in data[motor_id]["issues"] if issue["id"] == issue_id), None)
+
+    if not issue_to_update:
+        raise HTTPException(status_code=404, detail="Issue not found.")
+
+    issue_to_update["status"] = form_data.get("status")
+    if form_data.get("status") in ["InProgress", "Resolved"]:
+        issue_to_update["solved_by"] = form_data.get("solved_by")
+        if form_data.get("status") == "Resolved":
+            issue_to_update["solution_date"] = datetime.now().strftime("%Y-%m-%d")
+
+    save_data(data)
+    return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
+
+@app.post("/add_maintenance/{motor_id}")
+async def add_maintenance(request: Request, motor_id: str):
+    form_data = await request.form()
+    data = load_data()
+
+    if motor_id not in data:
+        raise HTTPException(status_code=404, detail="Motor not found.")
+
+    new_record = {
+        "id": str(uuid.uuid4()),
+        "description": form_data.get("maintenance_description"),
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "performed_by": form_data.get("performed_by")
+    }
+
+    if "maintenance_records" not in data[motor_id]:
+        data[motor_id]["maintenance_records"] = []
+
+    data[motor_id]["maintenance_records"].append(new_record)
+    save_data(data)
+
+    return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
 
 @app.get("/issues", response_class=HTMLResponse)
 async def issues_dashboard(request: Request):
@@ -193,30 +252,25 @@ async def issues_dashboard(request: Request):
     motors_with_issues = []
     
     for motor_id, motor_data in data.items():
-        issue_description = motor_data.get("Issue Description", "").strip()
-        if issue_description:  # Only include motors that have issues recorded
-            motor_info = {
-                "motor_id": motor_id,
-                "motor_used_in": motor_data.get("Motor used in", "N/A"),
-                "area_equipment": motor_data.get("Area / Equipment", "N/A"),
-                "issue_description": issue_description,
-                "issue_date": motor_data.get("Issue Date", "N/A"),
-                "issue_raised_by": motor_data.get("Issue Raised By", "N/A"),
-                "solved_by": motor_data.get("Solved By", "N/A"),
-                "date_solved": motor_data.get("Date Solved", "N/A"),
-                "solution_description": motor_data.get("Solution Description", "N/A"),
-                "issue_status": motor_data.get("Issue Status", "Open"),
-                "critical": motor_data.get("Critical", "NO")
-            }
-            motors_with_issues.append(motor_info)
+        if "issues" in motor_data:
+            for issue in motor_data["issues"]:
+                motors_with_issues.append({
+                    "motor_id": motor_id,
+                    "motor_used_in": motor_data.get("Motor Used In"),
+                    "area_equipment": motor_data.get("Area/Equipment"),
+                    "issue_description": issue.get("description"),
+                    "issue_date": issue.get("date_raised"),
+                    "issue_raised_by": issue.get("raised_by"),
+                    "issue_status": issue.get("status"),
+                    "issue_solved_by": issue.get("solved_by"),
+                    "issue_solution_date": issue.get("solution_date"),
+                    "critical": motor_data.get("Critical", "NO")
+                })
     
     # Sort by issue date (newest first), then by status
-    motors_with_issues.sort(key=lambda x: (x["issue_status"] != "Open", x["issue_date"]), reverse=True)
-    
+    motors_with_issues.sort(key=lambda x: (x["issue_status"] != "Open", x.get("issue_date", "")), reverse=True)
+
     return templates.TemplateResponse("issues.html", {
         "request": request,
-        "motors_with_issues": motors_with_issues,
-        "total_issues": len(motors_with_issues),
-        "open_issues": len([m for m in motors_with_issues if m["issue_status"] == "Open"]),
-        "resolved_issues": len([m for m in motors_with_issues if m["issue_status"] in ["Resolved", "Closed"]])
+        "motors_with_issues": motors_with_issues
     })
