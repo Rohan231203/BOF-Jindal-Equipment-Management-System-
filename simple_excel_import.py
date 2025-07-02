@@ -41,10 +41,10 @@ def import_from_excel():
         df = pd.read_excel(EXCEL_FILE, sheet_name=0) # Read the first sheet
         print(f"📄 Read {len(df)} total rows from the Excel file.")
 
-        # Limit to the first 100 rows
-        if len(df) > 100:
-            print("⚠️ Processing only the first 100 motors as requested.")
-            df = df.head(100)
+        # Limit to the first 50 rows
+        if len(df) > 50:
+            print("⚠️ Processing only the first 50 motors as requested.")
+            df = df.head(50)
         
         print(f"⚙️ Processing {len(df)} rows.")
 
