@@ -63,13 +63,13 @@ def get_motors_needing_maintenance():
                         "motor_id": motor_id,
                         "days_until": days_until,
                         "maintenance_date": next_maintenance,
-                        "area_equipment": motor_data.get("Area / Equipment", "N/A"),
-                        "motor_used_in": motor_data.get("Motor used in", "N/A"),
-                        "description": motor_data.get("Description of Process", "N/A"),
-                        "voltage": motor_data.get("Voltage (V)", "N/A"),
-                        "rating_kw": motor_data.get("Rating( KW)", "N/A"),
+                        "area_equipment": motor_data.get("Area / Equipment", motor_data.get("area_equipment", "N/A")),
+                        "motor_used_in": motor_data.get("Motor used in", motor_data.get("motor_used_in", "N/A")),
+                        "description": motor_data.get("Description of Process", motor_data.get("description", "N/A")),
+                        "voltage": motor_data.get("Voltage (V)", motor_data.get("V", "N/A")),
+                        "rating_kw": motor_data.get("Rating( KW)", motor_data.get("kw", "N/A")),
                         "last_maintenance": motor_data.get("Last Maintenance Date", "N/A"),
-                        "Critical": motor_data.get("Critical", "NO")
+                        "Critical": motor_data.get("Critical", motor_data.get("critical", "NO"))
                     }
                     if motor_info["Critical"] == "YES":
                         critical_motors_due.append(motor_info)
@@ -91,10 +91,10 @@ async def home(request: Request):
     for motor_id, motor_data in data.items():
         motor_info_list.append({
             "motor_id": motor_id,
-            "motor_used_in": motor_data.get("Motor used in", "N/A"),
-            "area_equipment": motor_data.get("Area / Equipment", "N/A"),
-            "description": motor_data.get("Description of Process", ""),
-            "critical": motor_data.get("Critical", "NO")
+            "motor_used_in": motor_data.get("Motor used in", motor_data.get("motor_used_in", "N/A")),
+            "area_equipment": motor_data.get("Area / Equipment", motor_data.get("area_equipment", "N/A")),
+            "description": motor_data.get("Description of Process", motor_data.get("description", "")),
+            "critical": motor_data.get("Critical", motor_data.get("critical", "NO"))
         })
     
     return templates.TemplateResponse("home.html", {

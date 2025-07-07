@@ -91,6 +91,118 @@
                 </div>
             </div>
 
+            <!-- Full Motor Data: Show all fields from Excel dynamically -->
+            <div class="card">
+                <div class="form-section">
+                    <h3>🗂️ Motor Technical Data</h3>
+                    <div class="form-grid">
+                        <!-- Electrical Specifications -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <h4 style="color: #4a5568; margin: 10px 0; border-bottom: 1px solid #edf2f7; padding-bottom: 5px;">⚡ Electrical Specifications</h4>
+                        </div>
+                        <div class="form-group">
+                            <label>Equipment</label>
+                            <input name="Equipment" value="{{ motor_data.get('Equipment', 'Nil') }}" placeholder="Equipment">
+                        </div>
+                        <div class="form-group">
+                            <label>Power (kW)</label>
+                            <input name="kw" value="{{ motor_data.get('kw', 'Nil') }}" placeholder="Power in kW">
+                        </div>
+                        <div class="form-group">
+                            <label>Speed (RPM)</label>
+                            <input name="RPM" value="{{ motor_data.get('RPM', 'Nil') }}" placeholder="RPM">
+                        </div>
+                        <div class="form-group">
+                            <label>Full Load Current (FLC)</label>
+                            <input name="FLC" value="{{ motor_data.get('FLC', 'Nil') }}" placeholder="FLC in Amps">
+                        </div>
+                        <div class="form-group">
+                            <label>Voltage (V)</label>
+                            <input name="V" value="{{ motor_data.get('V', 'Nil') }}" placeholder="Voltage">
+                        </div>
+                        <div class="form-group">
+                            <label>IP Rating</label>
+                            <input name="IP" value="{{ motor_data.get('IP', 'Nil') }}" placeholder="IP Rating">
+                        </div>
+                        <div class="form-group">
+                            <label>Duty Type</label>
+                            <input name="duty" value="{{ motor_data.get('duty', 'Nil') }}" placeholder="Duty Type">
+                        </div>
+                        <div class="form-group">
+                            <label>Insulation Class</label>
+                            <input name="Insu. CL." value="{{ motor_data.get('Insu. CL.', 'Nil') }}" placeholder="Insulation Class">
+                        </div>
+                        <div class="form-group">
+                            <label>Power Factor (PF)</label>
+                            <input name="PF" value="{{ motor_data.get('PF', 'Nil') }}" placeholder="Power Factor">
+                        </div>
+                        <div class="form-group">
+                            <label>Efficiency (%)</label>
+                            <input name="%Eff" value="{{ motor_data.get('%Eff', 'Nil') }}" placeholder="Efficiency">
+                        </div>
+                        <div class="form-group">
+                            <label>Frame Size</label>
+                            <input name="Frame" value="{{ motor_data.get('Frame', 'Nil') }}" placeholder="Frame Size">
+                        </div>
+                        
+                        <!-- Mechanical & Manufacturing Details -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <h4 style="color: #4a5568; margin: 20px 0 10px; border-bottom: 1px solid #edf2f7; padding-bottom: 5px;">🔧 Mechanical & Manufacturing Details</h4>
+                        </div>
+                        <div class="form-group">
+                            <label>Manufacturer</label>
+                            <input name="Make" value="{{ motor_data.get('Make', 'Nil') }}" placeholder="Manufacturer">
+                        </div>
+                        <div class="form-group">
+                            <label>Bearing Details (DE/NDE)</label>
+                            <input name="Bearing DE/NDE" value="{{ motor_data.get('Bearing DE/NDE', 'Nil') }}" placeholder="Bearing DE/NDE">
+                        </div>
+                        <div class="form-group">
+                            <label>Machine Serial Number</label>
+                            <input name="Machine Sl.no." value="{{ motor_data.get('Machine Sl.no.', 'Nil') }}" placeholder="Serial Number">
+                        </div>
+                        <div class="form-group">
+                            <label>Remarks</label>
+                            <textarea name="Remark" placeholder="Remarks about the motor">{{ motor_data.get('Remark', 'Nil') }}</textarea>
+                        </div>
+                        
+                        <!-- Procurement Information -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <h4 style="color: #4a5568; margin: 20px 0 10px; border-bottom: 1px solid #edf2f7; padding-bottom: 5px;">📋 Procurement Information</h4>
+                        </div>
+                        <div class="form-group">
+                            <label>Item Code</label>
+                            <input name="Item code" value="{{ motor_data.get('Item code', 'Nil') }}" placeholder="Item Code">
+                        </div>
+                        <div class="form-group">
+                            <label>Purchase Requisition Number</label>
+                            <input name="PR Number" value="{{ motor_data.get('PR Number', 'Nil') }}" placeholder="PR Number">
+                        </div>
+                        <div class="form-group">
+                            <label>Purchase Order Number</label>
+                            <input name="PO Number" value="{{ motor_data.get('PO Number', 'Nil') }}" placeholder="PO Number">
+                        </div>
+                        
+                        <!-- Other Fields -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <h4 style="color: #4a5568; margin: 20px 0 10px; border-bottom: 1px solid #edf2f7; padding-bottom: 5px;">📎 Additional Fields</h4>
+                        </div>
+                        {% for key, value in motor_data.items() %}
+                            {% if key not in [
+                                'Equipment', 'kw', 'RPM', 'FLC', 'V', 'IP', 'duty', 'Insu. CL.', 'PF', '%Eff', 'Frame', 'Make', 'Bearing DE/NDE', 'Machine Sl.no.', 'Remark', 'Item code', 'PR Number', 'PO Number',
+                                'issues', 'maintenance_records', 'Last Maintenance Date', 'Next Maintenance Date',
+                                'motor_id', 'motor_used_in', 'area_equipment', 'description', 'critical'
+                            ] %}
+                            <div class="form-group">
+                                <label>{{ key }}</label>
+                                <input name="{{ key }}" value="{{ value }}" placeholder="{{ key }}">
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
             <!-- Electrical Specifications -->
             <div class="card">
                 <div class="form-section">
