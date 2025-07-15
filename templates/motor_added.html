@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Added Successfully</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; color: #333; }
+        .container { max-width: 800px; margin: 40px auto; padding: 20px; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #27ae60; margin-bottom: 20px; }
+        p { margin-bottom: 25px; font-size: 1.1em; color: #555; }
+        .qr-code { border: 1px solid #ddd; padding: 10px; border-radius: 5px; display: inline-block; margin-bottom: 25px; }
+        .btn { display: inline-block; text-decoration: none; background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background 0.3s; margin: 0 10px; }
+        .btn:hover { background: #5a6fd8; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6169; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>✅ Motor '{{ motor_id }}' Added Successfully!</h1>
+            <p>The QR code for this motor has been generated. Download it now to print and attach to the equipment.</p>
+            
+            <div class="qr-code">
+                <img src="{{ qr_code_path }}" alt="QR Code for {{ motor_id }}" style="max-width: 200px;">
+            </div>
+            
+            <div>
+                <a href="{{ qr_code_path }}" download="{{ motor_id }}_qr_code.png" class="btn">📥 Download QR Code</a>
+                <a href="/motor?id={{ motor_id }}" class="btn btn-secondary">View Motor Details ➡️</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

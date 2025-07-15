@@ -24,7 +24,7 @@ SKIP_LABELS = {
 TARGET_FIELDS = [
     "Equipment", "kw", "RPM", "FLC", "V", "IP", "duty", "Insu. CL.", "PF", "%Eff",
     "Frame", "Make", "Bearing DE/NDE", "Machine Sl.no.", "Remark", "Item code", 
-    "PR Number", "PO Number"
+    "PR Number", "PO Number", "Maintenance Interval (Months)"
 ]
 
 # Column name mappings - each target field can be found in Excel under any of these variations
@@ -46,7 +46,8 @@ COLUMN_MAPPINGS = {
     "Remark": ["Remark", "Remarks", "Comments", "Notes", "Description", "Additional Info"],
     "Item code": ["Item code", "Item Code", "Item No", "Material Code", "Part No"],
     "PR Number": ["PR Number", "PR No", "Purchase Req", "Requisition", "PR"],
-    "PO Number": ["PO Number", "PO No", "Purchase Order", "Order No", "PO"]
+    "PO Number": ["PO Number", "PO No", "Purchase Order", "Order No", "PO"],
+    "Maintenance Interval (Months)": ["Maintenance Interval (Months)", "Interval", "Maintenance Period"]
 }
 
 def convert_to_str(value):
@@ -145,6 +146,10 @@ def import_from_excel():
                 motor_data["area_equipment"] = motor_data.get("Equipment", "Nil")
                 motor_data["description"] = motor_data.get("Remark", "Nil")
                 motor_data["critical"] = "NO"  # Default value
+                
+                # Set a default maintenance interval if not specified
+                if motor_data.get("Maintenance Interval (Months)") == "Nil":
+                    motor_data["Maintenance Interval (Months)"] = "3" # Default to 3 months
                 
                 # Add fields with names expected by the frontend/backend
                 motor_data["Motor used in"] = motor_data.get("Equipment", "Nil")

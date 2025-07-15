@@ -1,12 +1,12 @@
 import os
 import json
+import uuid
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional
-import uuid
 
 # Constants
 DATA_FILE = "motor_data.json"
@@ -127,12 +127,21 @@ async def add_motor(request: Request, motor_id: str = Form(...)):
         qr_code = qrcode.make(BASE_URL + motor_id)
         qr_code.save(qr_path)
 
-    return RedirectResponse(f"/motor?id={motor_id}", status_code=302)
+    return RedirectResponse(f"/motor_added/{motor_id}", status_code=302)
+
+@app.get("/motor_added/{motor_id}", response_class=HTMLResponse)
+async def motor_added(request: Request, motor_id: str):
+    return templates.TemplateResponse("motor_added.html", {
+        "request": request,
+        "motor_id": motor_id,
+        "qr_code_path": f"/qr_codes/{motor_id}.png"
+    })
 
 @app.get("/motor", response_class=HTMLResponse)
 async def view_motor(request: Request, id: str):
     data = load_data()
     motor_data = data.get(id, {})
+    
     return templates.TemplateResponse("motor.html", {
         "request": request,
         "motor_id": id,
@@ -222,6 +231,26 @@ async def update_issue(request: Request, motor_id: str, issue_id: str):
     save_data(data)
     return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
 
+@app.post("/delete_issue/{motor_id}/{issue_id}")
+async def delete_issue(request: Request, motor_id: str, issue_id: str):
+    data = load_data()
+
+    if motor_id not in data or "issues" not in data[motor_id]:
+        raise HTTPException(status_code=404, detail="Motor or issue list not found.")
+
+    initial_issue_count = len(data[motor_id]["issues"])
+    data[motor_id]["issues"] = [issue for issue in data[motor_id]["issues"] if issue["id"] != issue_id]
+
+    if len(data[motor_id]["issues"]) == initial_issue_count:
+        raise HTTPException(status_code=404, detail="Issue not found.")
+
+    save_data(data)
+    
+    referer = request.headers.get("referer")
+    if referer and "/issues" in referer:
+        return RedirectResponse("/issues", status_code=303)
+    return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
+
 @app.post("/add_maintenance/{motor_id}")
 async def add_maintenance(request: Request, motor_id: str):
     form_data = await request.form()
@@ -231,31 +260,82 @@ async def add_maintenance(request: Request, motor_id: str):
         raise HTTPException(status_code=404, detail="Motor not found.")
 
     # Get the maintenance date from the form, or use today's date if not provided
-    maintenance_date = form_data.get("maintenance_date")
-    if not maintenance_date:
-        maintenance_date = datetime.now().strftime("%Y-%m-%d")
+    maintenance_date_str = form_data.get("maintenance_date")
+    if not maintenance_date_str:
+        maintenance_date = datetime.now()
+    else:
+        maintenance_date = datetime.strptime(maintenance_date_str, "%Y-%m-%d")
+
+    # Calculate next maintenance date based on interval
+    interval_months = int(data[motor_id].get("Maintenance Interval (Months)", 3))
+    next_maintenance_date = maintenance_date + timedelta(days=interval_months * 30)
 
     new_record = {
         "id": str(uuid.uuid4()),
         "description": form_data.get("maintenance_description"),
-        "date": maintenance_date,
+        "date": maintenance_date.strftime("%Y-%m-%d"),
         "performed_by": form_data.get("performed_by"),
         "remarks": form_data.get("maintenance_remarks"),
-        "next_maintenance_date": form_data.get("next_maintenance_date")
+        "next_maintenance_date": next_maintenance_date.strftime("%Y-%m-%d")
     }
 
     if "maintenance_records" not in data[motor_id]:
         data[motor_id]["maintenance_records"] = []
 
+    # State management: Keep only the last 10 maintenance records
     data[motor_id]["maintenance_records"].append(new_record)
+    if len(data[motor_id]["maintenance_records"]) > 10:
+        data[motor_id]["maintenance_records"] = data[motor_id]["maintenance_records"][-10:]
     
     # Update the main motor record with the latest maintenance date and next maintenance date
-    data[motor_id]["Last Maintenance Date"] = maintenance_date
-    if form_data.get("next_maintenance_date"):
-        data[motor_id]["Next Maintenance Date"] = form_data.get("next_maintenance_date")
+    data[motor_id]["Last Maintenance Date"] = maintenance_date.strftime("%Y-%m-%d")
+    data[motor_id]["Next Maintenance Date"] = next_maintenance_date.strftime("%Y-%m-%d")
     
     save_data(data)
 
+    return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
+
+@app.post("/delete_motor/{motor_id}")
+async def delete_motor(request: Request, motor_id: str):
+    form_data = await request.form()
+    password = form_data.get("password")
+
+    if not password:
+        raise HTTPException(status_code=400, detail="Password is required.")
+
+    if password != PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid password.")
+
+    data = load_data()
+
+    if motor_id not in data:
+        raise HTTPException(status_code=404, detail="Motor not found.")
+
+    del data[motor_id]
+    
+    # Also delete the QR code file if it exists
+    qr_path = os.path.join(QR_FOLDER, f"{motor_id}.png")
+    if os.path.exists(qr_path):
+        os.remove(qr_path)
+        
+    save_data(data)
+
+    return RedirectResponse("/", status_code=303)
+
+@app.post("/delete_maintenance/{motor_id}/{record_id}")
+async def delete_maintenance(request: Request, motor_id: str, record_id: str):
+    data = load_data()
+
+    if motor_id not in data or "maintenance_records" not in data[motor_id]:
+        raise HTTPException(status_code=404, detail="Motor or maintenance records not found.")
+
+    initial_record_count = len(data[motor_id]["maintenance_records"])
+    data[motor_id]["maintenance_records"] = [record for record in data[motor_id]["maintenance_records"] if record.get("id") != record_id]
+
+    if len(data[motor_id]["maintenance_records"]) == initial_record_count:
+        raise HTTPException(status_code=404, detail="Maintenance record not found.")
+
+    save_data(data)
     return RedirectResponse(f"/motor?id={motor_id}", status_code=303)
 
 @app.get("/issues", response_class=HTMLResponse)
