@@ -125,8 +125,8 @@
                             <td><span class="critical-{{ motor.critical|lower }}">{{ motor.critical }}</span></td>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 5px;">
-                                    <a href="/motor?motor_id={{ motor.motor_id }}" class="btn-link">View Motor</a>
-                                    <form action="/delete_issue/{{ motor.motor_id }}/{{ motor.id }}" method="post" style="margin:0;">
+                                    <a href="/motor?id={{ motor.motor_id }}" class="btn-link">View Motor</a>
+                                    <form action="/delete_issue/{{ motor.motor_id }}/{{ motor.issue_id }}" method="post" style="margin:0;">
                                         <button type="button" onclick="confirmDelete(this.form)" class="btn-delete" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
                                     </form>
                                 </div>
@@ -174,8 +174,8 @@
                             <td><span class="critical-{{ motor.critical|lower }}">{{ motor.critical }}</span></td>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 5px;">
-                                    <a href="/motor?motor_id={{ motor.motor_id }}" class="btn-link">View Motor</a>
-                                    <form action="/delete_issue/{{ motor.motor_id }}/{{ motor.id }}" method="post" style="margin:0;">
+                                    <a href="/motor?id={{ motor.motor_id }}" class="btn-link">View Motor</a>
+                                    <form action="/delete_issue/{{ motor.motor_id }}/{{ motor.issue_id }}" method="post" style="margin:0;">
                                         <button type="button" onclick="confirmDelete(this.form)" class="btn-delete" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
                                     </form>
                                 </div>
@@ -227,8 +227,8 @@
                             <td><span class="critical-{{ motor.critical|lower }}">{{ motor.critical }}</span></td>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 5px;">
-                                    <a href="/motor?motor_id={{ motor.motor_id }}" class="btn-link">View Motor</a>
-                                    <form action="/delete_issue/{{ motor.motor_id }}/{{ motor.id }}" method="post" style="margin:0;">
+                                    <a href="/motor?id={{ motor.motor_id }}" class="btn-link">View Motor</a>
+                                    <form action="/delete_issue/{{ motor.motor_id }}/{{ motor.issue_id }}" method="post" style="margin:0;">
                                         <button type="button" onclick="confirmDelete(this.form)" class="btn-delete" style="background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
                                     </form>
                                 </div>

@@ -349,6 +349,7 @@ async def issues_dashboard(request: Request):
             for issue in motor_data["issues"]:
                 motors_with_issues.append({
                     "motor_id": motor_id,
+                    "issue_id": issue.get("id"),  # Make sure issue_id is included
                     "motor_used_in": motor_data.get("Motor used in", "N/A"),
                     "area_equipment": motor_data.get("Area / Equipment", "N/A"),
                     "issue_description": issue.get("description"),
